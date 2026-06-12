@@ -9,8 +9,8 @@ FECHA=$(date +%F_%H%M)
 ARCHIVO="acme_${FECHA}.sql.gz"
 
 echo "[backup] generando volcado de ${PGDATABASE} en ${PGHOST}..."
-PGPASSWORD="$PGPASSWORD" pg_dump -h "$PGHOST" -p "${PGPORT:-5432}" \
-  -U "$PGUSER" -d "$PGDATABASE" | gzip > "/tmp/${ARCHIVO}"
+docker run --rm -e PGPASSWORD="$PGPASSWORD" postgres:18-alpine \
+  pg_dump -h "$PGHOST" -p "${PGPORT:-5432}" -U "$PGUSER" -d "$PGDATABASE" | gzip > "/tmp/${ARCHIVO}"
 
 echo "[backup] subiendo a s3://${S3_BUCKET}/${ARCHIVO}..."
 aws s3 cp "/tmp/${ARCHIVO}" "s3://${S3_BUCKET}/${ARCHIVO}"

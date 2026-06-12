@@ -2,7 +2,7 @@
 [DEFAULT]
 bantime  = 1h
 findtime = 10m
-backend  = auto
+backend  = polling
 
 [sshd]
 enabled  = true
