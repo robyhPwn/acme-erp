@@ -44,7 +44,7 @@ const authLog = (linea) => {
 // RDS exige SSL: en el PoC se acepta el certificado del servidor; en
 // produccion se valida contra el bundle oficial rds-ca (global-bundle.pem).
 const pool = new Pool({
-  host: process.env.DB_HOST,
+  host: process.env.PGHOST,
   port: process.env.DB_PORT || 5432,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
@@ -145,4 +145,4 @@ app.get('/api/perfil', autenticar, (req, res) => res.json(req.usuario));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
-  console.log(`ACME ERP escuchando en :${PORT} | BD: ${process.env.DB_HOST}`));
+  console.log(`ACME ERP escuchando en :${PORT} | BD: ${process.env.PGHOST}`));
