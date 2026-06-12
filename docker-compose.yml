@@ -1,0 +1,18 @@
+# ACME ERP - EVA3 CI3051 - Stack de produccion
+# La base de datos NO es un contenedor: corre como PaaS en AWS RDS (PostgreSQL).
+services:
+  frontend:
+    build: ./frontend
+    image: acme-frontend:eva3
+    container_name: acme-frontend
+    ports:
+      - "80:3000"
+    env_file: .env
+    volumes:
+      - ./logs:/var/log/acme          # auth.log queda en el host para Fail2ban
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/salud"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

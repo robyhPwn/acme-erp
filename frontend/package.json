@@ -1,0 +1,17 @@
+{
+  "name": "acme-erp-frontend",
+  "version": "3.0.0",
+  "description": "Portal ERP ACME con autenticacion JWT + MFA (EVA3 CI3051)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0"
+  }
+}

@@ -1,0 +1,18 @@
+# /etc/fail2ban/jail.local - Fortificacion de la instancia Frontend (Req. 7)
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+backend  = auto
+
+[sshd]
+enabled  = true
+maxretry = 4
+
+[acme-auth]
+# Banea IPs con 5 intentos fallidos de login en el portal ERP en 10 minutos
+enabled  = true
+port     = http,https
+filter   = acme-auth
+logpath  = /srv/acme-erp/logs/auth.log
+maxretry = 5
+bantime  = 30m

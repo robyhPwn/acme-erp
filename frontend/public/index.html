@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACME ERP | Portal de acceso</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#1f2937;color:#e5e7eb;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
+  .caja{background:#111827;border:1px solid #374151;border-radius:10px;padding:32px;width:340px}
+  h1{font-size:20px;margin:0 0 4px;color:#f59e0b}
+  p.sub{margin:0 0 20px;font-size:13px;color:#9ca3af}
+  label{font-size:13px;display:block;margin:10px 0 4px}
+  input{width:100%;padding:9px;border-radius:6px;border:1px solid #374151;background:#1f2937;color:#e5e7eb;box-sizing:border-box}
+  button{width:100%;margin-top:18px;padding:10px;border:0;border-radius:6px;background:#f59e0b;color:#111827;font-weight:bold;cursor:pointer}
+  #msj{margin-top:12px;font-size:13px;min-height:18px}
+  .err{color:#f87171}.ok{color:#34d399}
+  #panel{display:none}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+  th,td{border:1px solid #374151;padding:6px;text-align:left}
+  th{background:#1f2937;color:#f59e0b}
+</style>
+</head>
+<body>
+<div class="caja">
+  <div id="login">
+    <h1>ACME ERP</h1>
+    <p class="sub">Ferreterias y distribucion de energia. Acceso restringido.</p>
+    <label>Usuario</label><input id="usuario" autocomplete="username">
+    <label>Password</label><input id="password" type="password" autocomplete="current-password">
+    <label>Codigo MFA (si esta activo)</label><input id="totp" inputmode="numeric" maxlength="6" placeholder="6 digitos">
+    <button onclick="entrar()">Ingresar</button>
+    <div id="msj"></div>
+  </div>
+  <div id="panel">
+    <h1>Inventario</h1>
+    <p class="sub">Sesion validada con token JWT.</p>
+    <table id="tabla"><thead><tr><th>ID</th><th>Producto</th><th>Precio</th><th>Stock</th></tr></thead><tbody></tbody></table>
+    <button onclick="salir()">Cerrar sesion</button>
+  </div>
+</div>
+<script>
+let token = null;
+async function entrar(){
+  const msj = document.getElementById('msj');
+  msj.textContent = 'Validando...'; msj.className = '';
+  const r = await fetch('/api/login', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      usuario: document.getElementById('usuario').value,
+      password: document.getElementById('password').value,
+      totp: document.getElementById('totp').value
+    })
+  });
+  const d = await r.json();
+  if(!r.ok){ msj.textContent = d.error || 'Acceso denegado'; msj.className='err'; return; }
+  token = d.token;
+  msj.textContent = 'Acceso concedido'; msj.className='ok';
+  const p = await fetch('/api/productos', { headers:{ Authorization:'Bearer '+token }});
+  const filas = await p.json();
+  const tb = document.querySelector('#tabla tbody');
+  tb.innerHTML = filas.map(f=>`<tr><td>${f.id}</td><td>${f.nombre}</td><td>$${f.precio.toLocaleString('es-CL')}</td><td>${f.stock}</td></tr>`).join('');
+  document.getElementById('login').style.display='none';
+  document.getElementById('panel').style.display='block';
+}
+function salir(){ token=null; location.reload(); }
+</script>
+</body>
+</html>
