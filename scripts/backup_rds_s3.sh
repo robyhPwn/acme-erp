@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
-# Respaldo diario de la BD PostgreSQL (AWS RDS) hacia un bucket S3.
-# Requisitos en el host: postgresql16 (pg_dump), aws-cli v2, archivo /srv/acme-erp/.env
+# Respaldo diario de la BD acme (RDS) hacia S3. Corre por cron a las 03:00.
 set -euo pipefail
-set -a; source /srv/acme-erp/.env; set +a
 
-FECHA=$(date +%Y-%m-%d_%H%M)
-ARCHIVO="/tmp/acme_erp_${FECHA}.sql.gz"
+cd "$(dirname "$0")/.."
+set -a; source .env; set +a
 
-echo "[$(date)] Iniciando respaldo de ${DB_NAME} en ${DB_HOST}"
-PGPASSWORD="${DB_PASS}" pg_dump -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
-  --no-owner --format=plain | gzip > "${ARCHIVO}"
+FECHA=$(date +%F_%H%M)
+ARCHIVO="acme_${FECHA}.sql.gz"
 
-aws s3 cp "${ARCHIVO}" "s3://${S3_BUCKET}/backups/" --region "${AWS_REGION}"
+echo "[backup] generando volcado de ${PGDATABASE} en ${PGHOST}..."
+PGPASSWORD="$PGPASSWORD" pg_dump -h "$PGHOST" -p "${PGPORT:-5432}" \
+  -U "$PGUSER" -d "$PGDATABASE" | gzip > "/tmp/${ARCHIVO}"
 
-echo "[$(date)] Verificando objeto subido:"
-aws s3 ls "s3://${S3_BUCKET}/backups/" --region "${AWS_REGION}" | tail -n 3
+echo "[backup] subiendo a s3://${S3_BUCKET}/${ARCHIVO}..."
+aws s3 cp "/tmp/${ARCHIVO}" "s3://${S3_BUCKET}/${ARCHIVO}"
 
-rm -f "${ARCHIVO}"
-echo "[$(date)] Respaldo finalizado correctamente"
+echo "[backup] verificando objeto en el bucket..."
+aws s3 ls "s3://${S3_BUCKET}/${ARCHIVO}"
+
+rm -f "/tmp/${ARCHIVO}"
+echo "[backup] OK ${ARCHIVO}"
