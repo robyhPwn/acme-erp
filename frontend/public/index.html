@@ -35,6 +35,14 @@
     <h1>Inventario</h1>
     <p class="sub">Sesion validada con token JWT.</p>
     <table id="tabla"><thead><tr><th>ID</th><th>Producto</th><th>Precio</th><th>Stock</th></tr></thead><tbody></tbody></table>
+    <div id="alta" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid #374151">
+      <h1 style="font-size:16px">Agregar producto (solo admin)</h1>
+      <label>Nombre</label><input id="np_nombre" placeholder="Nombre del producto">
+      <label>Precio</label><input id="np_precio" inputmode="numeric" placeholder="Precio en CLP">
+      <label>Stock</label><input id="np_stock" inputmode="numeric" placeholder="Cantidad">
+      <button onclick="agregar()" style="margin-top:8px">Agregar</button>
+      <p id="msj_alta" class="sub"></p>
+    </div>
     <button onclick="salir()">Cerrar sesion</button>
   </div>
 </div>
@@ -55,12 +63,36 @@ async function entrar(){
   if(!r.ok){ msj.textContent = d.error || 'Acceso denegado'; msj.className='err'; return; }
   token = d.token;
   msj.textContent = 'Acceso concedido'; msj.className='ok';
+  await cargarProductos();
+  const rol = JSON.parse(atob(token.split('.')[1])).rol;
+  if(rol === 'admin'){ document.getElementById('alta').style.display='block'; }
+  document.getElementById('login').style.display='none';
+  document.getElementById('panel').style.display='block';
+}
+async function cargarProductos(){
   const p = await fetch('/api/productos', { headers:{ Authorization:'Bearer '+token }});
   const filas = await p.json();
   const tb = document.querySelector('#tabla tbody');
   tb.innerHTML = filas.map(f=>`<tr><td>${f.id}</td><td>${f.nombre}</td><td>$${f.precio.toLocaleString('es-CL')}</td><td>${f.stock}</td></tr>`).join('');
-  document.getElementById('login').style.display='none';
-  document.getElementById('panel').style.display='block';
+}
+async function agregar(){
+  const m = document.getElementById('msj_alta');
+  const r = await fetch('/api/productos', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+    body: JSON.stringify({
+      nombre: document.getElementById('np_nombre').value,
+      precio: Number(document.getElementById('np_precio').value),
+      stock: Number(document.getElementById('np_stock').value)
+    })
+  });
+  const d = await r.json();
+  if(!r.ok){ m.textContent = d.error || 'No se pudo agregar'; m.style.color='#f87171'; return; }
+  m.textContent = 'Producto agregado'; m.style.color='#34d399';
+  document.getElementById('np_nombre').value='';
+  document.getElementById('np_precio').value='';
+  document.getElementById('np_stock').value='';
+  await cargarProductos();
 }
 function salir(){ token=null; location.reload(); }
 </script>
